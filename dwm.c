@@ -52,8 +52,8 @@
 #define ISVISIBLE(C)            ((C->tags & C->mon->tagset[C->mon->seltags]))
 #define LENGTH(X)               (sizeof X / sizeof X[0])
 #define MOUSEMASK               (BUTTONMASK|PointerMotionMask)
-#define WIDTH(X)                ((X)->w + 2 * (X)->bw + gappx)
-#define HEIGHT(X)               ((X)->h + 2 * (X)->bw + gappx)
+#define WIDTH(X)                ((X)->w + 2 * (X)->bw + selmon->gappx)
+#define HEIGHT(X)               ((X)->h + 2 * (X)->bw + selmon->gappx)
 #define TAGMASK                 ((1 << LENGTH(tags)) - 1)
 #define TEXTW(X)                (drw_fontset_getwidth(drw, (X)) + lrpad)
 
@@ -135,6 +135,7 @@ struct Monitor {
 	Window barwin;
 	const Layout *lt[2];
 	Pertag *pertag;
+        int gappx;              /* gap pixels */
 };
 
 typedef struct {
@@ -206,6 +207,9 @@ static void sendmon(Client *c, Monitor *m);
 static void setclientstate(Client *c, long state);
 static void setfocus(Client *c);
 static void setfullscreen(Client *c, int fullscreen);
+static void setgappx(int x);
+static void incrgaps(const Arg *arg);
+static void defaultgaps(const Arg *arg);
 static void setlayout(const Arg *arg);
 static void setcfact(const Arg *arg);
 static void setmfact(const Arg *arg);
@@ -675,6 +679,7 @@ createmon(void)
 	m->nmaster = nmaster;
 	m->showbar = showbar;
 	m->topbar = topbar;
+        m->gappx = gappx;
 	m->lt[0] = &layouts[0];
 	m->lt[1] = &layouts[1 % LENGTH(layouts)];
 	strncpy(m->ltsymbol, layouts[0].symbol, sizeof m->ltsymbol);
@@ -1349,8 +1354,8 @@ resizeclient(Client *c, int x, int y, int w, int h)
 			gapincr = -2 * borderpx;
 			wc.border_width = 0;
 		} else {
-			gapoffset = gappx;
-			gapincr = 2 * gappx;
+			gapoffset = selmon->gappx;
+			gapincr = selmon->gappx;
 		}
 	}
 
@@ -1578,6 +1583,26 @@ setfullscreen(Client *c, int fullscreen)
 		resizeclient(c, c->x, c->y, c->w, c->h);
 		arrange(c->mon);
 	}
+}
+
+void
+setgappx(int x)
+{
+    if (x < 0) x = 0;
+    selmon->gappx = x;
+    arrange(selmon);
+}
+
+void
+defaultgaps(const Arg *arg)
+{
+    setgappx(gappx);
+}
+
+void
+incrgaps(const Arg *arg)
+{
+    setgappx(selmon->gappx + arg->i);
 }
 
 void
