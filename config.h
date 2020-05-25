@@ -44,7 +44,7 @@ static const Rule rules[] = {
 static const float mfact     = 0.75; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 2;    /* number of clients in master area */
 static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
-static int attachbelow = 0;    /* 1 means attach at the end */
+static int attachend = 0;    /* 1 means attach at the end */
 
 #include "layouts.c"
 static const Layout layouts[] = {
@@ -119,7 +119,7 @@ static Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY,            	        XK_F2,      quit,           {0} },
-	{ MODKEY,                       XK_a,       toggleAttachBelow,	{0} },
+	{ MODKEY,                       XK_a,       toggleAttachEnd,	{0} },
 };
 
 /* button definitions */

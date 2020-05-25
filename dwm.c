@@ -153,8 +153,9 @@ static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interac
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
 static void attach(Client *c);
-static void attachBelow(Client *C);
-static void toggleAttachBelow();
+/* static void attachBelow(Client *C); */
+static void attachEnd(Client *C);
+static void toggleAttachEnd();
 static void attachstack(Client *c);
 static void buttonpress(XEvent *e);
 static void checkotherwm(void);
@@ -436,28 +437,40 @@ attach(Client *c)
 	c->mon->clients = c;
 }
 
+/* void */
+/* attachBelow(Client *c) */
+/* { */
+/*         //If there is nothing on the monitor or the selected client is */ 
+/*         //floating, attach as normal */
+/*         if (c->mon->sel == NULL || c->mon->sel->isfloating) { */
+/*             attach(c); */
+/*             return; */
+/*         } */
+
+/*         // Set the new client's next property to the same as the currently */
+/*         // selected client's next */
+/*         c->next = c->mon->sel->next; */
+
+/*         // Set the currently selected client's next property to the new client */
+/*         c->mon->sel->next = c; */
+/* } */
+
 void
-attachBelow(Client *c)
+attachEnd(Client *c)
 {
-        //If there is nothing on the monitor or the selected client is 
-        //floating, attach as normal
-        if (c->mon->sel == NULL || c->mon->sel->isfloating) {
-            attach(c);
-            return;
-        }
-
-        // Set the new client's next property to the same as the currently
-        // selected client's next
-        c->next = c->mon->sel->next;
-
-        // Set the currently selected client's next property to the new client
-        c->mon->sel->next = c;
+    Client *below = c->mon->clients;
+    for(; below && below->next; below = below->next);
+    if (below)
+        below->next = c;
+    else
+        c->mon->clients = c;
 }
 
 void
-toggleAttachBelow()
+toggleAttachEnd()
 {
-    attachbelow = !attachbelow;
+    attachend = !attachend;
+    drawbars();
 }
 
 void
@@ -794,9 +807,15 @@ drawbar(Monitor *m)
 				urg & 1 << i);
 		x += w;
 	}
-	w = blw = TEXTW(m->ltsymbol);
+        
+	char ltsymbolplus[18];
+        strcpy(ltsymbolplus, m->ltsymbol);
+        char suffix[2];
+        memcpy(suffix,(attachend ? "E" : "B"), 2);
+        strncat(ltsymbolplus,suffix,2);
+	w = blw = TEXTW(ltsymbolplus);
 	drw_setscheme(drw, scheme[SchemeNorm]);
-	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
+	x = drw_text(drw, x, 0, w, bh, lrpad / 2, ltsymbolplus, 0);
 
 	if ((w = m->ww - sw - x) > bh) {
 		if (m->sel) {
@@ -1134,8 +1153,8 @@ manage(Window w, XWindowAttributes *wa)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
 	if (c->isfloating)
 		XRaiseWindow(dpy, c->win);
-        if (attachbelow)
-            attachBelow(c);
+        if (attachend)
+            attachEnd(c);
         else
             attach(c);
 	attachstack(c);
@@ -1534,8 +1553,8 @@ sendmon(Client *c, Monitor *m)
 	detachstack(c);
 	c->mon = m;
 	c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
-        if (attachbelow)
-            attachBelow(c);
+        if (attachend)
+            attachEnd(c);
         else
             attach(c);
 	attachstack(c);
@@ -2088,8 +2107,8 @@ updategeom(void)
 					m->clients = c->next;
 					detachstack(c);
 					c->mon = mons;
-                                        if (attachbelow)
-                                            attachBelow(c);
+                                        if (attachend)
+                                            attachEnd(c);
                                         else
                                             attach(c);
 					attachstack(c);
