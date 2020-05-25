@@ -44,6 +44,7 @@ static const Rule rules[] = {
 static const float mfact     = 0.75; /* factor of master area size [0.05..0.95] */
 static const int nmaster     = 2;    /* number of clients in master area */
 static const int resizehints = 1;    /* 1 means respect size hints in tiled resizals */
+static int attachbelow = 0;    /* 1 means attach at the end */
 
 #include "layouts.c"
 static const Layout layouts[] = {
@@ -75,7 +76,7 @@ static const char *termcmd[]  = { "st", NULL };
 #include "movestack.c"
 static Key keys[] = {
 	/* modifier                     key        function        argument */
-	{ MODKEY|ShiftMask,			XK_q,		killclient,	{0} },
+	{ MODKEY|ShiftMask,		XK_q,		killclient,	{0} },
 	{ MODKEY,                       XK_n,		focusstack,	{.i = +1 } },
 	{ MODKEY,                       XK_e,		focusstack,	{.i = -1 } },
 	{ MODKEY|ShiftMask,             XK_n,		movestack,	{.i = +1 } },
@@ -84,12 +85,12 @@ static Key keys[] = {
 	{ MODKEY|ControlMask,           XK_h,		setcfact,	{.f = -0.05} },
 	{ MODKEY|ControlMask,           XK_i,		setcfact,	{.f = +0.05} },
 	{ MODKEY|ControlMask,           XK_e,		setmfact,	{.f = -0.05} },
-        { MODKEY,                       XK_h,           incrgaps,       {.i = +1 } },
-        { MODKEY,                       XK_i,           incrgaps,       {.i = -1 } },
+        { MODKEY,                       XK_h,           incrgaps,       {.i = +2 } },
+        { MODKEY,                       XK_i,           incrgaps,       {.i = -2 } },
         { MODKEY|ShiftMask,             XK_0,           defaultgaps,    { 0 } },
 	{ MODKEY|ControlMask,           XK_n,		setmfact,	{.f = +0.05} },
 	{ MODKEY|ControlMask,           XK_0,		setcfact,	{.f = 0.00} },
-	{ MODKEY|ShiftMask,		XK_i,		incnmaster,	{.i = +1 } },
+	{ MODKEY,	        	XK_o,		incnmaster,	{.i = +1 } },
 	{ MODKEY|ShiftMask,		XK_o,		incnmaster,	{.i = -1 } },
 	{ MODKEY,                       XK_space, zoom,           {0} },
 	{ MODKEY,                       XK_Tab,    view,           {0} },
@@ -118,6 +119,7 @@ static Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY,            	        XK_F2,      quit,           {0} },
+	{ MODKEY,                       XK_a,       toggleAttachBelow,	{0} },
 };
 
 /* button definitions */

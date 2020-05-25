@@ -153,7 +153,8 @@ static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interac
 static void arrange(Monitor *m);
 static void arrangemon(Monitor *m);
 static void attach(Client *c);
-static void attachbelow(Client *C);
+static void attachBelow(Client *C);
+static void toggleAttachBelow();
 static void attachstack(Client *c);
 static void buttonpress(XEvent *e);
 static void checkotherwm(void);
@@ -436,14 +437,27 @@ attach(Client *c)
 }
 
 void
-attachbelow(Client *c)
+attachBelow(Client *c)
 {
-	Client *below = c->mon->clients;
-	for (; below && below->next; below = below->next);
-	if (below)
-		below->next = c;
-	else
-		c->mon->clients = c;
+        //If there is nothing on the monitor or the selected client is 
+        //floating, attach as normal
+        if (c->mon->sel == NULL || c->mon->sel->isfloating) {
+            attach(c);
+            return;
+        }
+
+        // Set the new client's next property to the same as the currently
+        // selected client's next
+        c->next = c->mon->sel->next;
+
+        // Set the currently selected client's next property to the new client
+        c->mon->sel->next = c;
+}
+
+void
+toggleAttachBelow()
+{
+    attachbelow = !attachbelow;
 }
 
 void
@@ -1120,7 +1134,10 @@ manage(Window w, XWindowAttributes *wa)
 		c->isfloating = c->oldstate = trans != None || c->isfixed;
 	if (c->isfloating)
 		XRaiseWindow(dpy, c->win);
-	attachbelow(c);
+        if (attachbelow)
+            attachBelow(c);
+        else
+            attach(c);
 	attachstack(c);
 	XChangeProperty(dpy, root, netatom[NetClientList], XA_WINDOW, 32, PropModeAppend,
 		(unsigned char *) &(c->win), 1);
@@ -1337,6 +1354,7 @@ resizeclient(Client *c, int x, int y, int w, int h)
         unsigned int n;
         unsigned int gapoffset;
         unsigned int gapincr;
+        unsigned int winheight;
         Client *nbc;
 
 	wc.border_width = c->bw;
@@ -1355,14 +1373,25 @@ resizeclient(Client *c, int x, int y, int w, int h)
 			wc.border_width = 0;
 		} else {
 			gapoffset = selmon->gappx;
-			gapincr = selmon->gappx;
+			gapincr = selmon->gappx*2;
 		}
 	}
+        FILE *log = NULL;
+
+        if (!(log = fopen("/tmp/dwm.log", "a"))) {
+            /* The file couldn't be opened; handle this error. */
+        } else {
+            fprintf(log, "Here %d %d %d %d\n", gapoffset, gapincr, h ,(h-gapincr));
+        }
+        fclose(log);
+
+        winheight = 0;
+        if (y + h + 6 < selmon->mh) { winheight = gapoffset; }
 
 	c->oldx = c->x; c->x = wc.x = x + gapoffset;
 	c->oldy = c->y; c->y = wc.y = y + gapoffset;
 	c->oldw = c->w; c->w = wc.width = w - gapincr;
-	c->oldh = c->h; c->h = wc.height = h - gapincr;
+	c->oldh = c->h; c->h = wc.height = h - gapincr + winheight;
 
 
 	XConfigureWindow(dpy, c->win, CWX|CWY|CWWidth|CWHeight|CWBorderWidth, &wc);
@@ -1505,7 +1534,10 @@ sendmon(Client *c, Monitor *m)
 	detachstack(c);
 	c->mon = m;
 	c->tags = m->tagset[m->seltags]; /* assign tags of target monitor */
-	attachbelow(c);
+        if (attachbelow)
+            attachBelow(c);
+        else
+            attach(c);
 	attachstack(c);
 	focus(NULL);
 	arrange(NULL);
@@ -1588,7 +1620,7 @@ setfullscreen(Client *c, int fullscreen)
 void
 setgappx(int x)
 {
-    if (x < 0) x = 0;
+    if (x < 1) x = 1;
     selmon->gappx = x;
     arrange(selmon);
 }
@@ -2056,7 +2088,10 @@ updategeom(void)
 					m->clients = c->next;
 					detachstack(c);
 					c->mon = mons;
-					attachbelow(c);
+                                        if (attachbelow)
+                                            attachBelow(c);
+                                        else
+                                            attach(c);
 					attachstack(c);
 				}
 				if (m == selmon)
