@@ -258,7 +258,7 @@ static void bstackhoriz(Monitor *m);
 static const char broken[] = "broken";
 static char stext[256];
 static char rawstext[256];
-static int dwmblockssig;;
+static int dwmblockssig;
 pid_t dwmblockspid = 0;
 static int screen;
 static int sw, sh;           /* X display screen geometry width, height */
@@ -845,9 +845,9 @@ drawbar(Monitor *m)
         
 	char ltsymbolplus[18];
         strcpy(ltsymbolplus, m->ltsymbol);
-        char suffix[2];
-        memcpy(suffix,(attachend ? "E" : "B"), 2);
-        strncat(ltsymbolplus,suffix,2);
+        char suffix[1];
+        memcpy(suffix,(attachend ? "E" : "B"), 1);
+        strncat(ltsymbolplus,suffix,1);
 	w = blw = TEXTW(ltsymbolplus);
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, ltsymbolplus, 0);
@@ -855,7 +855,7 @@ drawbar(Monitor *m)
 	if ((w = m->ww - sw - x) > bh) {
 		if (m->sel) {
 			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
-			// drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
+			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
 			if (m->sel->isfloating)
 				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
 		} else {
